@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Company profile card lookup using Claude AI",
   "type": "module",
-  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js"
