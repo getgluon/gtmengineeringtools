@@ -1,20 +1,8 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "linkedin.html", "use": "@vercel/static" },
-    { "src": "api/company.js", "use": "@vercel/node" },
-    { "src": "api/linkedin-generate.js", "use": "@vercel/node" },
-    { "src": "api/linkedin-regenerate.js", "use": "@vercel/node" }
-  ],
   "functions": {
-    "api/linkedin-generate.js": { "maxDuration": 60 }
+    "api/linkedin/generate.js": { "maxDuration": 60 }
   },
-  "routes": [
-    { "src": "/api/company", "dest": "/api/company.js" },
-    { "src": "/api/linkedin/generate", "dest": "/api/linkedin-generate.js" },
-    { "src": "/api/linkedin/regenerate", "dest": "/api/linkedin-regenerate.js" },
-    { "src": "/linkedin", "dest": "/linkedin.html" },
-    { "src": "/", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/linkedin", "destination": "/linkedin.html" }
   ]
 }
