@@ -1,14 +1,14 @@
 import express from "express";
 import Anthropic from "@anthropic-ai/sdk";
 import { fileURLToPath } from "url";
-import { dirname } from "path";
+import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const client = new Anthropic(); // reads ANTHROPIC_API_KEY from env
 
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(join(__dirname, "public")));
 
 app.post("/api/company", async (req, res) => {
   const { company } = req.body ?? {};
