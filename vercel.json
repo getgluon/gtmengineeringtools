@@ -3,6 +3,7 @@
     "api/linkedin/generate.js": { "maxDuration": 60 }
   },
   "rewrites": [
-    { "source": "/linkedin", "destination": "/linkedin.html" }
+    { "source": "/linkedin", "destination": "/linkedin.html" },
+    { "source": "/company", "destination": "/company.html" }
   ]
 }
