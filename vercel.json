@@ -1,9 +1,13 @@
 {
-  "functions": {
-    "api/research.js": { "maxDuration": 300 },
-    "api/webhook.js":  { "maxDuration": 300 }
-  },
-  "rewrites": [
-    { "source": "/", "destination": "/index.html" }
+  "version": 2,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "api/research.js", "use": "@vercel/node", "config": { "maxDuration": 300 } },
+    { "src": "api/webhook.js",  "use": "@vercel/node", "config": { "maxDuration": 300 } }
+  ],
+  "routes": [
+    { "src": "/api/research", "dest": "/api/research.js" },
+    { "src": "/api/webhook",  "dest": "/api/webhook.js" },
+    { "src": "/",             "dest": "/index.html" }
   ]
 }
