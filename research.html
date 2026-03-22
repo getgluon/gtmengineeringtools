@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GTM Deep Research Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #161920;
+      --surface2: #1e2130;
+      --surface3: #252a3a;
+      --border: #2a2f42;
+      --border2: #353b52;
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --accent3: #ec4899;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --text: #e4e7f0;
+      --text2: #9ba3bc;
+      --text3: #6b7491;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 80px;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    header h1 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: var(--text3);
+      margin-top: 6px;
+    }
+
+    /* ── Search ───────────────────────────────────────────────── */
+    .search-wrap {
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-bar input::placeholder { color: var(--text3); }
+    .search-bar input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+
+    .search-bar button {
+      padding: 14px 22px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .search-bar button:hover { background: #4f46e5; }
+    .search-bar button:active { transform: scale(0.97); }
+    .search-bar button:disabled { background: #3730a3; cursor: not-allowed; opacity: 0.6; transform: none; }
+
+    /* ── Status ───────────────────────────────────────────────── */
+    #status-area {
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 16px;
+    }
+
+    .status-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-spinner {
+      width: 28px;
+      height: 28px;
+      border: 2.5px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status-text {
+      font-size: 0.9rem;
+      color: var(--text2);
+    }
+
+    .status-text strong {
+      color: var(--text);
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+
+    /* ── Results ──────────────────────────────────────────────── */
+    #result-area {
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .brief {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeUp 0.35s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Panels ───────────────────────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .panel-header:hover { background: var(--surface2); }
+
+    .panel-icon {
+      font-size: 1.1rem;
+    }
+
+    .panel-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      flex: 1;
+    }
+
+    .panel-chevron {
+      color: var(--text3);
+      font-size: 0.8rem;
+      transition: transform 0.2s;
+    }
+
+    .panel.collapsed .panel-chevron { transform: rotate(-90deg); }
+    .panel.collapsed .panel-body { display: none; }
+
+    .panel-body {
+      padding: 20px 22px;
+    }
+
+    /* ── Company overview ─────────────────────────────────────── */
+    .overview-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .co-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      letter-spacing: -1px;
+    }
+
+    .co-meta h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .co-meta a {
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      margin-top: 2px;
+      display: inline-block;
+    }
+
+    .co-meta a:hover { text-decoration: underline; }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      padding: 4px 11px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .badge-purple  { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+    .badge-green   { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+    .badge-yellow  { background: rgba(245,158,11,0.15); color: #fcd34d; }
+    .badge-blue    { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    .badge-pink    { background: rgba(236,72,153,0.15); color: #f9a8d4; }
+
+    .description {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--text2);
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .stat-box {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 0.68rem;
+      color: var(--text3);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── ICP Score ────────────────────────────────────────────── */
+    .icp-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+
+    .score-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      flex-shrink: 0;
+      font-size: 1.6rem;
+      font-weight: 800;
+      border: 3px solid;
+    }
+
+    .score-circle.high   { border-color: var(--green); color: var(--green); }
+    .score-circle.medium { border-color: var(--yellow); color: var(--yellow); }
+    .score-circle.low    { border-color: var(--red); color: var(--red); }
+
+    .score-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 1px;
+    }
+
+    .icp-reasoning {
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: var(--text2);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 540px) { .two-col { grid-template-columns: 1fr; } }
+
+    .mini-list h4 {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text3);
+      margin-bottom: 8px;
+    }
+
+    .mini-list ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mini-list li {
+      font-size: 0.85rem;
+      color: var(--text2);
+      padding-left: 14px;
+      position: relative;
+      line-height: 1.4;
+    }
+
+    .mini-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 7px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .mini-list.positives li::before { background: var(--green); }
+    .mini-list.risks li::before     { background: var(--red); }
+
+    /* ── News ─────────────────────────────────────────────────── */
+    .news-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .news-item {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .news-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .news-date {
+      font-size: 0.72rem;
+      color: var(--text3);
+      background: var(--surface3);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .news-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .news-summary {
+      font-size: 0.83rem;
+      color: var(--text2);
+      line-height: 1.55;
+      margin-bottom: 6px;
+    }
+
+    .news-significance {
+      font-size: 0.78rem;
+      color: #a5b4fc;
+      display: flex;
+      gap: 5px;
+      align-items: flex-start;
+    }
+
+    /* ── Tech Stack ───────────────────────────────────────────── */
+    .tech-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tech-row {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+
+    .tech-category {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text3);
+      margin-bottom: 6px;
+    }
+
+    .tech-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .tool-tag {
+      padding: 3px 10px;
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .tech-signals {
+      font-size: 0.78rem;
+      color: var(--text3);
+      font-style: italic;
+    }
+
+    /* ── Decision Makers ──────────────────────────────────────── */
+    .dm-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .dm-card {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .dm-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .dm-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .dm-title {
+      font-size: 0.8rem;
+      color: var(--text3);
+      margin-top: 1px;
+    }
+
+    .dm-li a {
+      font-size: 0.75rem;
+      color: #60a5fa;
+      text-decoration: none;
+      padding: 3px 9px;
+      background: rgba(59,130,246,0.1);
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .dm-li a:hover { text-decoration: underline; }
+
+    .dm-detail {
+      font-size: 0.83rem;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+
+    .dm-detail + .dm-detail { margin-top: 5px; }
+
+    .dm-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text3);
+      margin-bottom: 1px;
+    }
+
+    /* ── Pain Points ──────────────────────────────────────────── */
+    .pain-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .pain-card {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .pain-name {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .pain-row {
+      margin-bottom: 6px;
+    }
+
+    .pain-row .dm-label { margin-bottom: 2px; }
+
+    .pain-row p {
+      font-size: 0.83rem;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+
+    .pain-angle p {
+      font-size: 0.83rem;
+      color: #a5b4fc;
+      line-height: 1.5;
+    }
+
+    /* ── Outreach ─────────────────────────────────────────────── */
+    .outreach-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid var(--border2);
+      background: transparent;
+      color: var(--text2);
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+    .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .email-card {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .email-variant {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent2);
+      margin-bottom: 6px;
+    }
+
+    .email-subject {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .email-body {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: var(--text2);
+      white-space: pre-wrap;
+    }
+
+    .copy-btn {
+      margin-top: 10px;
+      padding: 6px 14px;
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 7px;
+      font-size: 0.78rem;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover { background: var(--border2); color: var(--text); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    .linkedin-box {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .tp-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tp-card {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .tp-point {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    /* ── Error ────────────────────────────────────────────────── */
+    .error-box {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .error-box h3 { color: #fca5a5; font-size: 1rem; margin-bottom: 6px; }
+    .error-box p  { color: #f87171; font-size: 0.85rem; }
+
+    /* ── Misc ─────────────────────────────────────────────────── */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    b { color: var(--text); }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">&#x1F50D;</div>
+      <h1>GTM Deep Research Agent</h1>
+    </div>
+    <p>AI-powered sales intelligence &mdash; enter a company name or URL to generate a full brief</p>
+  </header>
+
+  <div class="search-wrap">
+    <div class="search-bar">
+      <input id="company-input" type="text" placeholder="e.g. Stripe, notion.so, Vercel…" autocomplete="off" />
+      <button id="search-btn">Research</button>
+    </div>
+  </div>
+
+  <div id="status-area"></div>
+  <div id="result-area"></div>
+
+  <script>
+    const input  = document.getElementById('company-input');
+    const btn    = document.getElementById('search-btn');
+    const status = document.getElementById('status-area');
+    const result = document.getElementById('result-area');
+
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') research(); });
+    btn.addEventListener('click', research);
+
+    function esc(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+
+    function initials(name) {
+      return String(name).trim().split(/\s+/).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+    }
+
+    function scoreClass(n) {
+      if (n >= 7) return 'high';
+      if (n >= 4) return 'medium';
+      return 'low';
+    }
+
+    // ── Status card ─────────────────────────────────────────────
+    function showStatus(msg) {
+      status.innerHTML = `
+        <div class="status-card">
+          <div class="status-spinner"></div>
+          <div class="status-text">
+            <strong>Researching&hellip;</strong>
+            ${esc(msg)}
+          </div>
+        </div>`;
+    }
+
+    function clearStatus() {
+      status.innerHTML = '';
+    }
+
+    function showError(msg) {
+      clearStatus();
+      result.innerHTML = `
+        <div class="error-box">
+          <h3>Research failed</h3>
+          <p>${esc(msg)}</p>
+        </div>`;
+    }
+
+    // ── Collapsible panel ────────────────────────────────────────
+    function panel(icon, title, bodyHtml, startOpen = true) {
+      const id = 'panel-' + Math.random().toString(36).slice(2);
+      return `
+        <div class="panel${startOpen ? '' : ' collapsed'}" id="${id}">
+          <div class="panel-header" onclick="togglePanel('${id}')">
+            <span class="panel-icon">${icon}</span>
+            <span class="panel-title">${title}</span>
+            <span class="panel-chevron">&#x25BE;</span>
+          </div>
+          <div class="panel-body">${bodyHtml}</div>
+        </div>`;
+    }
+
+    window.togglePanel = function(id) {
+      document.getElementById(id).classList.toggle('collapsed');
+    };
+
+    // ── Copy button ──────────────────────────────────────────────
+    window.copyText = function(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.classList.add('copied');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 2000);
+      });
+    };
+
+    // ── Tab switching ────────────────────────────────────────────
+    window.switchTab = function(groupId, tabId) {
+      document.querySelectorAll(`[data-group="${groupId}"]`).forEach(el => {
+        el.classList.remove('active');
+      });
+      document.querySelectorAll(`[data-tab-panel="${groupId}"]`).forEach(el => {
+        el.classList.remove('active');
+      });
+      document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+      document.getElementById(`tab-panel-${tabId}`).classList.add('active');
+    };
+
+    // ── Render ───────────────────────────────────────────────────
+    function renderBrief(d) {
+      const o = d.company_overview || {};
+      const news = d.recent_news || [];
+      const tech = d.tech_stack || [];
+      const dms  = d.decision_makers || [];
+      const pain = d.pain_points || [];
+      const icp  = d.icp_fit || {};
+      const out  = d.outreach || {};
+
+      // Overview
+      const overviewHtml = `
+        <div class="overview-top">
+          <div class="co-avatar">${initials(o.name || '?')}</div>
+          <div class="co-meta">
+            <h2>${esc(o.name)}</h2>
+            ${o.website ? `<a href="${esc(o.website)}" target="_blank" rel="noopener">${esc(o.website)}</a>` : ''}
+          </div>
+        </div>
+        <div class="badges">
+          ${o.industry  ? `<span class="badge badge-purple">${esc(o.industry)}</span>` : ''}
+          ${o.size      ? `<span class="badge badge-green">${esc(o.size)} employees</span>` : ''}
+          ${o.hq        ? `<span class="badge badge-blue">&#x1F4CD; ${esc(o.hq)}</span>` : ''}
+          ${o.founded   ? `<span class="badge badge-yellow">Est. ${esc(o.founded)}</span>` : ''}
+          ${o.funding   ? `<span class="badge badge-pink">&#x1F4B0; ${esc(o.funding)}</span>` : ''}
+        </div>
+        <p class="description">${esc(o.description)}</p>
+        ${(o.employees || o.valuation) ? `
+          <div class="stats-row">
+            ${o.employees  ? `<div class="stat-box"><div class="stat-value">${esc(o.employees)}</div><div class="stat-label">Employees</div></div>` : ''}
+            ${o.valuation  ? `<div class="stat-box"><div class="stat-value">${esc(o.valuation)}</div><div class="stat-label">Valuation</div></div>` : ''}
+          </div>` : ''}`;
+
+      // ICP
+      const icpHtml = `
+        <div class="icp-row">
+          <div class="score-circle ${scoreClass(icp.score || 0)}">
+            ${icp.score || '?'}
+            <div class="score-label">/ 10</div>
+          </div>
+          <p class="icp-reasoning">${esc(icp.reasoning)}</p>
+        </div>
+        <div class="two-col">
+          <div class="mini-list positives">
+            <h4>Strengths</h4>
+            <ul>${(icp.positives || []).map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
+          </div>
+          <div class="mini-list risks">
+            <h4>Risks</h4>
+            <ul>${(icp.risks || []).map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+          </div>
+        </div>`;
+
+      // News
+      const newsHtml = news.length === 0 ? '<p class="description">No recent news found.</p>' : `
+        <div class="news-list">
+          ${news.map(n => `
+            <div class="news-item">
+              <div class="news-meta"><span class="news-date">${esc(n.date)}</span></div>
+              <div class="news-title">${esc(n.title)}</div>
+              <div class="news-summary">${esc(n.summary)}</div>
+              ${n.significance ? `<div class="news-significance">&#x26A1; ${esc(n.significance)}</div>` : ''}
+            </div>`).join('')}
+        </div>`;
+
+      // Tech
+      const techHtml = tech.length === 0 ? '<p class="description">No tech stack signals found.</p>' : `
+        <div class="tech-grid">
+          ${tech.map(t => `
+            <div class="tech-row">
+              <div class="tech-category">${esc(t.category)}</div>
+              <div class="tech-tools">${(t.tools||[]).map(tool=>`<span class="tool-tag">${esc(tool)}</span>`).join('')}</div>
+              ${t.signals ? `<div class="tech-signals">${esc(t.signals)}</div>` : ''}
+            </div>`).join('')}
+        </div>`;
+
+      // Decision makers
+      const dmsHtml = dms.length === 0 ? '<p class="description">No decision makers found.</p>' : `
+        <div class="dm-list">
+          ${dms.map(dm => `
+            <div class="dm-card">
+              <div class="dm-top">
+                <div>
+                  <div class="dm-name">${esc(dm.name)}</div>
+                  <div class="dm-title">${esc(dm.title)}</div>
+                </div>
+                ${dm.linkedin ? `<div class="dm-li"><a href="https://${esc(dm.linkedin.replace(/^https?:\/\//,''))}" target="_blank" rel="noopener">LinkedIn &rarr;</a></div>` : ''}
+              </div>
+              ${dm.focus ? `<div class="dm-label">Focus</div><div class="dm-detail">${esc(dm.focus)}</div>` : ''}
+              ${dm.recent_activity ? `<div class="dm-label" style="margin-top:8px">Recent Activity</div><div class="dm-detail">${esc(dm.recent_activity)}</div>` : ''}
+            </div>`).join('')}
+        </div>`;
+
+      // Pain points
+      const painHtml = pain.length === 0 ? '<p class="description">No pain points identified.</p>' : `
+        <div class="pain-list">
+          ${pain.map(p => `
+            <div class="pain-card">
+              <div class="pain-name">${esc(p.pain)}</div>
+              ${p.evidence ? `<div class="pain-row"><div class="dm-label">Evidence</div><p>${esc(p.evidence)}</p></div>` : ''}
+              ${p.our_angle ? `<div class="pain-row pain-angle"><div class="dm-label">Your Angle</div><p>${esc(p.our_angle)}</p></div>` : ''}
+            </div>`).join('')}
+        </div>`;
+
+      // Outreach
+      const gid = 'outreach-' + Math.random().toString(36).slice(2);
+      const emails = out.cold_emails || [];
+      const tps    = out.talking_points || [];
+      const liConn = out.linkedin_connection;
+      const liDm   = out.linkedin_inmail;
+
+      const emailTabsHtml = emails.map((em, i) => `
+        <button id="tab-btn-${gid}-email-${i}" class="tab-btn${i===0?' active':''}" data-group="${gid}-email" onclick="switchTab('${gid}-email','${gid}-email-${i}')">${esc(em.variant)}</button>`).join('');
+
+      const emailPanelsHtml = emails.map((em, i) => {
+        const bodyText = (em.subject ? 'Subject: ' + em.subject + '\n\n' : '') + (em.body || '');
+        return `
+          <div id="tab-panel-${gid}-email-${i}" class="tab-panel${i===0?' active':''}" data-tab-panel="${gid}-email">
+            <div class="email-card">
+              <div class="email-variant">${esc(em.variant)}</div>
+              <div class="email-subject">Subject: ${esc(em.subject)}</div>
+              <div class="email-body">${esc(em.body)}</div>
+              <button class="copy-btn" onclick="copyText(this, ${JSON.stringify(bodyText)})">Copy</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      const liTabId1 = `${gid}-li-conn`;
+      const liTabId2 = `${gid}-li-dm`;
+      const liTabId3 = `${gid}-tp`;
+
+      const liHtml = `
+        <div class="outreach-tabs">
+          ${emails.length ? `<div style="display:contents">
+            <div style="font-size:0.75rem;color:var(--text3);align-self:center;margin-right:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Emails</div>
+            ${emailTabsHtml}
+          </div>` : ''}
+        </div>
+        ${emailPanelsHtml}
+        ${liConn || liDm ? `
+          <div style="margin-top:16px">
+            <div class="outreach-tabs">
+              ${liConn ? `<button id="tab-btn-${liTabId1}" class="tab-btn active" data-group="${gid}-li" onclick="switchTab('${gid}-li','${liTabId1}')">Connection Request</button>` : ''}
+              ${liDm   ? `<button id="tab-btn-${liTabId2}" class="tab-btn${liConn?'':' active'}" data-group="${gid}-li" onclick="switchTab('${gid}-li','${liTabId2}')">InMail</button>` : ''}
+            </div>
+            ${liConn ? `
+              <div id="tab-panel-${liTabId1}" class="tab-panel active" data-tab-panel="${gid}-li">
+                <div class="linkedin-box">
+                  <div class="email-body">${esc(liConn)}</div>
+                  <button class="copy-btn" onclick="copyText(this, ${JSON.stringify(liConn)})">Copy</button>
+                </div>
+              </div>` : ''}
+            ${liDm ? `
+              <div id="tab-panel-${liTabId2}" class="tab-panel${liConn?'':' active'}" data-tab-panel="${gid}-li">
+                <div class="linkedin-box">
+                  <div class="email-subject">Subject: ${esc((liDm||{}).subject)}</div>
+                  <div class="email-body">${esc((liDm||{}).body)}</div>
+                  <button class="copy-btn" onclick="copyText(this, ${JSON.stringify(((liDm||{}).subject||'')+':\n'+((liDm||{}).body||''))})">Copy</button>
+                </div>
+              </div>` : ''}
+          </div>` : ''}
+        ${tps.length ? `
+          <div style="margin-top:16px">
+            <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:10px">Talking Points</div>
+            <div class="tp-list">
+              ${tps.map(tp=>`
+                <div class="tp-card">
+                  <div class="tp-point">${esc(tp.point)}</div>
+                  ${tp.why ? `<div class="dm-label">Why it resonates</div><div class="dm-detail">${esc(tp.why)}</div>` : ''}
+                  ${tp.how_to_use ? `<div class="dm-label" style="margin-top:6px">How to use</div><div class="dm-detail">${esc(tp.how_to_use)}</div>` : ''}
+                </div>`).join('')}
+            </div>
+          </div>` : ''}`;
+
+      result.innerHTML = `
+        <div class="brief">
+          ${panel('&#x1F3E2;', 'Company Overview', overviewHtml, true)}
+          ${panel('&#x1F3AF;', 'ICP Fit Score', icpHtml, true)}
+          ${panel('&#x1F4F0;', 'Recent News &amp; Signals', newsHtml, true)}
+          ${panel('&#x1F527;', 'Tech Stack', techHtml, false)}
+          ${panel('&#x1F465;', 'Decision Makers', dmsHtml, true)}
+          ${panel('&#x1F4A1;', 'Pain Points &amp; Opportunities', painHtml, true)}
+          ${panel('&#x2709;&#xFE0F;', 'Outreach Templates', liHtml, true)}
+        </div>`;
+    }
+
+    // ── Main research flow ───────────────────────────────────────
+    async function research() {
+      const company = input.value.trim();
+      if (!company) { input.focus(); return; }
+
+      btn.disabled = true;
+      result.innerHTML = '';
+      showStatus('Initializing deep research agent...');
+
+      try {
+        const es = new EventSource('/api/research?' + new URLSearchParams({ company }));
+        // Use fetch+SSE via POST instead since EventSource only supports GET
+        es.close();
+
+        // Manual SSE over fetch
+        const resp = await fetch('/api/research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company })
+        });
+
+        if (!resp.ok || !resp.body) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.error || `Server error ${resp.status}`);
+        }
+
+        const reader = resp.body.getReader();
+        const dec    = new TextDecoder();
+        let   buf    = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+
+          const chunks = buf.split('\n\n');
+          buf = chunks.pop(); // keep incomplete chunk
+
+          for (const chunk of chunks) {
+            const lines = chunk.trim().split('\n');
+            let event = 'message', data = '';
+            for (const line of lines) {
+              if (line.startsWith('event: ')) event = line.slice(7).trim();
+              if (line.startsWith('data: '))  data  = line.slice(6).trim();
+            }
+            if (!data) continue;
+            const payload = JSON.parse(data);
+
+            if (event === 'status') {
+              showStatus(payload.message);
+            } else if (event === 'result') {
+              clearStatus();
+              renderBrief(payload);
+            } else if (event === 'error') {
+              showError(payload.message);
+            }
+            // 'done' event — nothing needed
+          }
+        }
+      } catch (e) {
+        showError(e.message || 'Unexpected error. Please try again.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

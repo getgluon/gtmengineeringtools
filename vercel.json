@@ -1,13 +1,19 @@
 {
   "version": 2,
   "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "api/research.js", "use": "@vercel/node", "config": { "maxDuration": 300 } },
-    { "src": "api/webhook.js",  "use": "@vercel/node", "config": { "maxDuration": 300 } }
+    { "src": "index.html",           "use": "@vercel/static" },
+    { "src": "company-profile.html", "use": "@vercel/static" },
+    { "src": "research.html",        "use": "@vercel/static" },
+    { "src": "api/company.js",       "use": "@vercel/node" },
+    { "src": "api/research.js",      "use": "@vercel/node", "config": { "maxDuration": 300 } },
+    { "src": "api/webhook.js",       "use": "@vercel/node", "config": { "maxDuration": 300 } }
   ],
   "routes": [
-    { "src": "/api/research", "dest": "/api/research.js" },
-    { "src": "/api/webhook",  "dest": "/api/webhook.js" },
-    { "src": "/",             "dest": "/index.html" }
+    { "src": "/api/company",   "dest": "/api/company.js" },
+    { "src": "/api/research",  "dest": "/api/research.js" },
+    { "src": "/api/webhook",   "dest": "/api/webhook.js" },
+    { "src": "/company-profile", "dest": "/company-profile.html" },
+    { "src": "/research",      "dest": "/research.html" },
+    { "src": "/",              "dest": "/index.html" }
   ]
 }
