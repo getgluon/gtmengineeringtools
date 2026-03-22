@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedIn Content Engine</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080810;
+      --bg-card: #0f0f1a;
+      --bg-panel: #0c0c18;
+      --bg-input: #13131f;
+      --bg-hover: #1a1a2e;
+      --border: #1e1e30;
+      --border-focus: #4c1d95;
+      --text: #e2e2f0;
+      --text-muted: #6b6b8a;
+      --text-dim: #9999b8;
+      --purple: #7c3aed;
+      --purple-light: #a78bfa;
+      --purple-glow: rgba(124, 58, 237, 0.25);
+      --cyan: #06b6d4;
+      --cyan-light: #67e8f9;
+      --cyan-glow: rgba(6, 182, 212, 0.2);
+      --green: #059669;
+      --green-light: #6ee7b7;
+      --green-glow: rgba(5, 150, 105, 0.2);
+      --orange: #d97706;
+      --orange-light: #fcd34d;
+      --orange-glow: rgba(217, 119, 6, 0.2);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 58px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8, 8, 16, 0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.3px;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-brand-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--purple), #4338ca);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .nav-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--purple-glow);
+      color: var(--purple-light);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 58px);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 320px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-inner {
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .sidebar-section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-dim);
+    }
+
+    input, textarea {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px var(--purple-glow);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+
+    /* ── Topic chips ── */
+    .topics-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .topic-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .topic-chip:hover {
+      border-color: var(--purple);
+      background: var(--bg-hover);
+    }
+
+    .topic-chip.selected {
+      border-color: var(--purple);
+      background: var(--purple-glow);
+    }
+
+    .topic-chip input[type="checkbox"] {
+      display: none;
+    }
+
+    .topic-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      opacity: 0.4;
+      transition: opacity 0.2s;
+    }
+
+    .topic-chip.selected .topic-dot { opacity: 1; }
+
+    .dot-purple { background: var(--purple-light); }
+    .dot-cyan { background: var(--cyan-light); }
+    .dot-green { background: var(--green-light); }
+    .dot-orange { background: var(--orange-light); }
+
+    .topic-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      line-height: 1.3;
+      transition: color 0.2s;
+    }
+
+    .topic-chip.selected .topic-label { color: var(--text); }
+
+    .topic-count {
+      margin-left: auto;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* ── Generate button ── */
+    .btn-generate {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--purple), #4338ca);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: -0.2px;
+      transition: opacity 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-generate:hover:not(:disabled) { opacity: 0.9; }
+    .btn-generate:active:not(:disabled) { transform: scale(0.99); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-icon { font-size: 1rem; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Stats strip ── */
+    .stats-strip {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    .stat-pill strong {
+      color: var(--purple-light);
+    }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 28px 60px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      gap: 16px;
+      padding: 40px;
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+
+    .empty-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+
+    .empty-sub {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      max-width: 340px;
+      line-height: 1.6;
+    }
+
+    /* ── Loading state ── */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 20px;
+    }
+
+    .loading-spinner-large {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--border);
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-text {
+      font-size: 0.95rem;
+      color: var(--text-dim);
+    }
+
+    .loading-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Week section ── */
+    .week-section {
+      margin-bottom: 36px;
+    }
+
+    .week-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .week-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .week-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .week-count {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Posts grid ── */
+    .posts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── Post card ── */
+    .post-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .post-card:hover {
+      border-color: #2a2a40;
+      transform: translateY(-1px);
+    }
+
+    .post-card.regenerating {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .post-card-header {
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topic-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 5px;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge-purple { background: var(--purple-glow); color: var(--purple-light); }
+    .badge-cyan { background: var(--cyan-glow); color: var(--cyan-light); }
+    .badge-green { background: var(--green-glow); color: var(--green-light); }
+    .badge-orange { background: var(--orange-glow); color: var(--orange-light); }
+
+    .post-date {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .post-card-body {
+      padding: 14px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .post-hook {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+      letter-spacing: -0.2px;
+    }
+
+    .post-paragraphs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .post-paragraph {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .post-cta {
+      font-size: 0.8rem;
+      color: var(--purple-light);
+      font-weight: 500;
+      line-height: 1.5;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Card actions ── */
+    .post-card-actions {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 7px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.2s;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-copy:hover {
+      border-color: var(--cyan);
+      color: var(--cyan-light);
+      background: var(--cyan-glow);
+    }
+
+    .btn-copy.copied {
+      border-color: var(--green);
+      color: var(--green-light);
+      background: var(--green-glow);
+    }
+
+    .btn-regen:hover {
+      border-color: var(--orange);
+      color: var(--orange-light);
+      background: var(--orange-glow);
+    }
+
+    .btn-regen:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ── Error toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 18px;
+      border-radius: 9px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      z-index: 999;
+      transform: translateY(80px);
+      transition: transform 0.3s ease;
+      max-width: 360px;
+    }
+
+    .toast.show { transform: translateY(0); }
+
+    .toast-error {
+      background: #1f0a0a;
+      border: 1px solid #7f1d1d;
+      color: #fca5a5;
+    }
+
+    .toast-success {
+      background: #041f14;
+      border: 1px solid #065f46;
+      color: var(--green-light);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3a50; }
+
+    /* ── Calendar header strip ── */
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .calendar-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .calendar-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .topic-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .layout { flex-direction: column; height: auto; }
+      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .main { padding: 20px 16px 40px; }
+      nav { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/">
+    <span class="nav-brand-icon">⚡</span>
+    GTM Engineering Tools
+  </a>
+  <span class="nav-badge">LinkedIn Engine</span>
+</nav>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <div>
+        <p class="sidebar-section-title">Your Profile</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input id="name" type="text" placeholder="e.g. Alex Rivera" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="jobTitle">Job Title</label>
+            <input id="jobTitle" type="text" placeholder="e.g. Head of GTM Engineering" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="bio">Brief Bio</label>
+            <textarea id="bio" placeholder="e.g. I build AI-powered GTM systems that help sales teams close more deals with less manual work. 5+ years in RevOps and sales automation."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="sidebar-section-title">Content Topics</p>
+        <div class="topics-grid">
+          <label class="topic-chip selected" id="chip-0">
+            <input type="checkbox" checked value="GTM Engineering & AI automation" />
+            <span class="topic-dot dot-purple"></span>
+            <span class="topic-label">GTM Engineering & AI automation</span>
+          </label>
+          <label class="topic-chip selected" id="chip-1">
+            <input type="checkbox" checked value="RevOps insights" />
+            <span class="topic-dot dot-cyan"></span>
+            <span class="topic-label">RevOps insights</span>
+          </label>
+          <label class="topic-chip selected" id="chip-2">
+            <input type="checkbox" checked value="Sales & outbound strategy" />
+            <span class="topic-dot dot-green"></span>
+            <span class="topic-label">Sales & outbound strategy</span>
+          </label>
+          <label class="topic-chip selected" id="chip-3">
+            <input type="checkbox" checked value="Personal journey & learning in public" />
+            <span class="topic-dot dot-orange"></span>
+            <span class="topic-label">Personal journey & learning in public</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn-generate" id="generateBtn" onclick="generatePosts()">
+          <span class="btn-icon">✦</span>
+          Generate 20 Posts
+        </button>
+        <div class="stats-strip" id="statsStrip" style="display:none;">
+          <span class="stat-pill"><strong id="statTotal">0</strong> posts</span>
+          <span class="stat-pill"><strong id="statWeeks">4</strong> weeks</span>
+          <span class="stat-pill" id="statTopicsChip"></span>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main" id="main">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">📅</div>
+      <div class="empty-title">Your content calendar awaits</div>
+      <div class="empty-sub">Fill in your profile, choose topics, and generate a full month of LinkedIn posts — ready to copy and schedule.</div>
+    </div>
+
+    <div class="loading-state" id="loadingState" style="display:none;">
+      <div class="loading-spinner-large"></div>
+      <div class="loading-text">Generating your content calendar…</div>
+      <div class="loading-sub">Claude is crafting 20 unique posts for you</div>
+    </div>
+
+    <div id="calendarView" style="display:none;">
+      <div class="calendar-header">
+        <div>
+          <div class="calendar-title">Content Calendar</div>
+          <div class="calendar-subtitle" id="calSubtitle">20 posts · 4 weeks</div>
+        </div>
+        <div class="topic-legend" id="topicLegend"></div>
+      </div>
+      <div id="weeksContainer"></div>
+    </div>
+  </main>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ──
+  let postsData = [];
+  let profileData = {};
+
+  // ── Topic chip toggle ──
+  document.querySelectorAll('.topic-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const cb = chip.querySelector('input[type="checkbox"]');
+      cb.checked = !cb.checked;
+      chip.classList.toggle('selected', cb.checked);
+    });
+  });
+
+  function getSelectedTopics() {
+    return [...document.querySelectorAll('.topic-chip input:checked')].map(cb => cb.value);
+  }
+
+  function getProfile() {
+    return {
+      name: document.getElementById('name').value.trim(),
+      jobTitle: document.getElementById('jobTitle').value.trim(),
+      bio: document.getElementById('bio').value.trim(),
+    };
+  }
+
+  // ── Toast ──
+  let toastTimer;
+  function showToast(msg, type = 'error') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast toast-${type} show`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // ── Generate ──
+  async function generatePosts() {
+    const profile = getProfile();
+    if (!profile.name) { showToast('Please enter your name.'); return; }
+    if (!profile.jobTitle) { showToast('Please enter your job title.'); return; }
+    if (!profile.bio) { showToast('Please add a brief bio.'); return; }
+
+    const topics = getSelectedTopics();
+    if (topics.length === 0) { showToast('Select at least one topic.'); return; }
+
+    profileData = profile;
+
+    setView('loading');
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Generating…';
+
+    try {
+      const res = await fetch('/api/linkedin/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...profile, topics }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Generation failed.');
+
+      postsData = data.posts;
+      renderCalendar(postsData, topics);
+      setView('calendar');
+      updateStats(postsData, topics);
+    } catch (err) {
+      showToast(err.message);
+      setView('empty');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="btn-icon">✦</span> Regenerate All';
+    }
+  }
+
+  // ── Render calendar ──
+  function renderCalendar(posts, topics) {
+    const container = document.getElementById('weeksContainer');
+    container.innerHTML = '';
+
+    // Group by week
+    const weeks = {};
+    posts.forEach(post => {
+      const w = post.weekNum;
+      if (!weeks[w]) weeks[w] = [];
+      weeks[w].push(post);
+    });
+
+    // Legend
+    const legend = document.getElementById('topicLegend');
+    legend.innerHTML = '';
+    const uniqueTopics = [...new Set(posts.map(p => p.topic))];
+    uniqueTopics.forEach(t => {
+      const color = posts.find(p => p.topic === t)?.topicColor || 'purple';
+      legend.innerHTML += `
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--${color}-light)"></div>
+          <span>${t}</span>
+        </div>`;
+    });
+
+    // Subtitle
+    const allDates = posts.map(p => p.dateLabel);
+    const first = allDates[0] || '';
+    const last = allDates[allDates.length - 1] || '';
+    document.getElementById('calSubtitle').textContent =
+      `20 posts · ${first} → ${last}`;
+
+    // Render weeks
+    Object.entries(weeks).forEach(([weekNum, weekPosts]) => {
+      const section = document.createElement('div');
+      section.className = 'week-section';
+      section.innerHTML = `
+        <div class="week-header">
+          <span class="week-label">Week ${weekNum}</span>
+          <div class="week-line"></div>
+          <span class="week-count">${weekPosts.length} posts</span>
+        </div>
+        <div class="posts-grid" id="week-${weekNum}-grid"></div>
+      `;
+      container.appendChild(section);
+
+      const grid = section.querySelector(`#week-${weekNum}-grid`);
+      weekPosts.forEach(post => {
+        grid.appendChild(buildPostCard(post));
+      });
+    });
+  }
+
+  // ── Build post card ──
+  function buildPostCard(post) {
+    const card = document.createElement('div');
+    card.className = 'post-card';
+    card.id = `card-${post.id}`;
+    card.dataset.postId = post.id;
+
+    const paragraphsHtml = post.paragraphs
+      .map(p => `<div class="post-paragraph">${escHtml(p)}</div>`)
+      .join('');
+
+    card.innerHTML = `
+      <div class="post-card-header">
+        <span class="topic-badge badge-${post.topicColor}">${escHtml(post.topic)}</span>
+        <span class="post-date">${escHtml(post.dateLabel)}</span>
+      </div>
+      <div class="post-card-body">
+        <div class="post-hook">${escHtml(post.hook)}</div>
+        <div class="post-paragraphs">${paragraphsHtml}</div>
+        <div class="post-cta">${escHtml(post.cta)}</div>
+      </div>
+      <div class="post-card-actions">
+        <button class="btn-action btn-copy" onclick="copyPost('${post.id}', this)" title="Copy post text">
+          📋 Copy
+        </button>
+        <button class="btn-action btn-regen" onclick="regeneratePost('${post.id}', this)" title="Regenerate this post">
+          ↺ Regenerate
+        </button>
+      </div>
+    `;
+    return card;
+  }
+
+  // ── Copy post ──
+  function copyPost(postId, btn) {
+    const post = postsData.find(p => p.id === postId);
+    if (!post) return;
+
+    const text = [
+      post.hook,
+      '',
+      ...post.paragraphs.map(p => p + '\n'),
+      post.cta
+    ].join('\n');
+
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerHTML = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = '📋 Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.innerHTML = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = '📋 Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  // ── Regenerate single post ──
+  async function regeneratePost(postId, btn) {
+    const postIndex = postsData.findIndex(p => p.id === postId);
+    if (postIndex === -1) return;
+
+    const post = postsData[postIndex];
+    const card = document.getElementById(`card-${postId}`);
+
+    card.classList.add('regenerating');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div>';
+
+    try {
+      const res = await fetch('/api/linkedin/regenerate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...profileData,
+          topic: post.topic,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Regeneration failed.');
+
+      // Update stored data
+      postsData[postIndex] = {
+        ...post,
+        hook: data.post.hook,
+        paragraphs: data.post.paragraphs,
+        cta: data.post.cta,
+      };
+
+      // Replace card in DOM
+      const newCard = buildPostCard(postsData[postIndex]);
+      card.parentNode.replaceChild(newCard, card);
+
+    } catch (err) {
+      showToast(err.message);
+      card.classList.remove('regenerating');
+      btn.disabled = false;
+      btn.innerHTML = '↺ Regenerate';
+    }
+  }
+
+  // ── UI helpers ──
+  function setView(view) {
+    document.getElementById('emptyState').style.display = view === 'empty' ? 'flex' : 'none';
+    document.getElementById('loadingState').style.display = view === 'loading' ? 'flex' : 'none';
+    document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
+  }
+
+  function updateStats(posts, topics) {
+    const strip = document.getElementById('statsStrip');
+    document.getElementById('statTotal').textContent = posts.length;
+    document.getElementById('statWeeks').textContent = Math.ceil(posts.length / 5);
+    document.getElementById('statTopicsChip').innerHTML =
+      `<strong>${topics.length}</strong> topic${topics.length !== 1 ? 's' : ''}`;
+    strip.style.display = 'flex';
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
