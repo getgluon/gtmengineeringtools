@@ -8,7 +8,9 @@
     { "src": "api/research.js",             "use": "@vercel/node", "config": { "maxDuration": 300 } },
     { "src": "api/webhook.js",              "use": "@vercel/node", "config": { "maxDuration": 300 } },
     { "src": "api/linkedin/generate.js",    "use": "@vercel/node", "config": { "maxDuration": 300 } },
-    { "src": "api/linkedin/regenerate.js",  "use": "@vercel/node", "config": { "maxDuration": 300 } }
+    { "src": "api/linkedin/regenerate.js",  "use": "@vercel/node", "config": { "maxDuration": 300 } },
+    { "src": "abm-landing.html",            "use": "@vercel/static" },
+    { "src": "api/abm/generate.js",         "use": "@vercel/node", "config": { "maxDuration": 60 } }
   ],
   "routes": [
     { "src": "/api/company",             "dest": "/api/company.js" },
@@ -16,9 +18,11 @@
     { "src": "/api/webhook",             "dest": "/api/webhook.js" },
     { "src": "/api/linkedin/generate",   "dest": "/api/linkedin/generate.js" },
     { "src": "/api/linkedin/regenerate", "dest": "/api/linkedin/regenerate.js" },
+    { "src": "/api/abm/generate",        "dest": "/api/abm/generate.js" },
     { "src": "/company-profile",         "dest": "/company-profile.html" },
     { "src": "/research",                "dest": "/research.html" },
     { "src": "/linkedin",                "dest": "/linkedin.html" },
+    { "src": "/abm-landing",             "dest": "/abm-landing.html" },
     { "src": "/",                        "dest": "/index.html" }
   ]
 }

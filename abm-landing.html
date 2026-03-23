@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ABM Landing Page Generator – GTM Engineering Tools</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #161920;
+      --surface2: #1e2130;
+      --surface3: #252a3a;
+      --border: #2a2f42;
+      --border2: #353b52;
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --accent3: #ec4899;
+      --accent-glow: rgba(99,102,241,0.2);
+      --green: #10b981;
+      --text: #e4e7f0;
+      --text2: #9ba3bc;
+      --text3: #6b7491;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 48px 20px 100px;
+    }
+
+    .page-wrap { max-width: 1100px; margin: 0 auto; }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text3); text-decoration: none; font-size: 0.85rem;
+      margin-bottom: 32px; transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--text2); }
+
+    .page-header { margin-bottom: 40px; }
+    .header-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+    .header-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .page-header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.4px; }
+    .page-header p { color: var(--text3); font-size: 0.9rem; margin-top: 6px; }
+
+    /* ── Form Card ───────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text3); margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.82rem; font-weight: 500; color: var(--text2); }
+    .form-group input,
+    .form-group textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 0.92rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: var(--text3); }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 11px 22px; border-radius: 10px;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.2s; font-family: inherit;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.12);
+      box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--accent); color: var(--text);
+    }
+    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-deploy {
+      background: linear-gradient(135deg, var(--green), #059669);
+      color: #fff;
+    }
+    .btn-deploy:hover:not(:disabled) {
+      filter: brightness(1.1);
+      box-shadow: 0 4px 16px rgba(16,185,129,0.35);
+    }
+    .btn-deploy:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .form-actions { margin-top: 20px; display: flex; align-items: center; gap: 12px; }
+
+    /* ── Status bar ─────────────────────────────────────────── */
+    .status-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px; border-radius: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      font-size: 0.875rem; color: var(--text2);
+    }
+    .spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Preview + Deploy ───────────────────────────────────── */
+    .preview-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+      align-items: start;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 820px) {
+      .preview-layout { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    .preview-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .preview-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+    .preview-url {
+      flex: 1; background: var(--surface3); border-radius: 6px;
+      padding: 4px 10px; font-size: 0.75rem; color: var(--text3);
+      margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .preview-card iframe {
+      width: 100%; height: 560px; border: none; display: block;
+    }
+
+    .deploy-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+    .deploy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+    }
+    .deploy-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+    .deploy-card p { font-size: 0.82rem; color: var(--text3); margin-bottom: 18px; line-height: 1.5; }
+
+    .url-box {
+      display: flex; gap: 8px; align-items: stretch;
+      margin-top: 14px;
+    }
+    .url-box input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 8px; padding: 9px 12px; color: var(--text2);
+      font-size: 0.8rem; font-family: 'Courier New', monospace;
+      outline: none;
+    }
+    .btn-copy {
+      padding: 9px 14px; background: var(--surface3);
+      border: 1px solid var(--border2); border-radius: 8px;
+      color: var(--text2); font-size: 0.8rem; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap; font-family: inherit;
+    }
+    .btn-copy:hover { border-color: var(--accent); color: var(--text); }
+    .btn-copy.copied { border-color: var(--green); color: var(--green); }
+
+    .success-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(16,185,129,0.12); color: var(--green);
+      font-size: 0.78rem; font-weight: 600; margin-bottom: 10px;
+    }
+
+    .meta-info { display: flex; flex-direction: column; gap: 8px; }
+    .meta-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.8rem; padding: 8px 12px;
+      background: var(--surface2); border-radius: 8px;
+    }
+    .meta-row .label { color: var(--text3); }
+    .meta-row .value { color: var(--text2); font-weight: 500; }
+
+    /* ── History Table ──────────────────────────────────────── */
+    .section-title {
+      font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text3); margin-bottom: 14px;
+    }
+
+    .table-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 12px 16px;
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text3); background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 13px 16px; font-size: 0.87rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+    .td-company { color: var(--text); font-weight: 600; }
+    .td-url a {
+      color: var(--accent); text-decoration: none; font-family: monospace;
+      font-size: 0.8rem;
+    }
+    .td-url a:hover { text-decoration: underline; }
+
+    .btn-sm {
+      padding: 5px 12px; font-size: 0.78rem; border-radius: 7px;
+      font-weight: 500;
+    }
+
+    .empty-state {
+      text-align: center; padding: 40px 16px;
+      color: var(--text3); font-size: 0.9rem;
+    }
+
+    .hidden { display: none !important; }
+
+    /* ── Error ─────────────────────────────────────────────── */
+    .error-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px; border-radius: 10px;
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      font-size: 0.875rem; color: #f87171;
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <a href="/" class="back-link">← GTM Engineering Tools</a>
+
+  <div class="page-header">
+    <div class="header-row">
+      <div class="header-icon">🎯</div>
+      <h1>ABM Landing Page Generator</h1>
+    </div>
+    <p>Generate personalized, one-to-one landing pages for key accounts — powered by Claude AI. Deploy instantly and copy the URL into Clay or Attio.</p>
+  </div>
+
+  <!-- ── Input Form ────────────────────────────────────────── -->
+  <div class="card" id="form-card">
+    <div class="card-title">Account Details</div>
+    <form id="generate-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="company-name">Company Name</label>
+          <input id="company-name" type="text" placeholder="e.g. Acme Corp" required />
+        </div>
+        <div class="form-group">
+          <label for="contact-name">Contact Name</label>
+          <input id="contact-name" type="text" placeholder="e.g. Sarah Johnson" required />
+        </div>
+        <div class="form-group">
+          <label for="contact-role">Their Role</label>
+          <input id="contact-role" type="text" placeholder="e.g. VP of Sales" required />
+        </div>
+        <div class="form-group">
+          <label for="pain-point">Main Pain Point</label>
+          <input id="pain-point" type="text" placeholder="e.g. Reps spending too much time on manual data entry" required />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit" id="generate-btn">
+          <span>✨</span> Generate Page
+        </button>
+        <div id="status-container"></div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Preview + Deploy ─────────────────────────────────── -->
+  <div class="preview-layout hidden" id="preview-section">
+
+    <div class="preview-card">
+      <div class="preview-header">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <div class="preview-url" id="preview-url-bar">preview</div>
+      </div>
+      <iframe id="preview-frame" title="Landing page preview"></iframe>
+    </div>
+
+    <div class="deploy-sidebar">
+      <div class="deploy-card">
+        <h3>Your page is ready</h3>
+        <p>Deploy it to a unique URL that you can share or add to your Clay / Attio workflows.</p>
+
+        <button class="btn btn-deploy" id="deploy-btn" style="width:100%">
+          🚀 Deploy & Get URL
+        </button>
+
+        <div id="deployed-section" class="hidden">
+          <div class="success-badge" style="margin-top:16px">✓ Deployed</div>
+          <div class="url-box">
+            <input id="deployed-url" type="text" readonly />
+            <button class="btn-copy" id="copy-btn">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="deploy-card" id="meta-card">
+        <div class="card-title" style="margin-bottom:14px">Page Details</div>
+        <div class="meta-info" id="meta-info"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── History ───────────────────────────────────────────── -->
+  <div id="history-section">
+    <div class="section-title">Generated Pages</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Contact</th>
+            <th>Role</th>
+            <th>Created</th>
+            <th>URL</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="pages-tbody">
+          <tr><td colspan="6"><div class="empty-state">No pages generated yet. Create your first above.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let currentContent = null;   // Claude-generated JSON
+let currentMeta    = null;   // { company, contact, role, painPoint }
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const form           = document.getElementById('generate-form');
+const generateBtn    = document.getElementById('generate-btn');
+const statusContainer= document.getElementById('status-container');
+const previewSection = document.getElementById('preview-section');
+const previewFrame   = document.getElementById('preview-frame');
+const previewUrlBar  = document.getElementById('preview-url-bar');
+const deployBtn      = document.getElementById('deploy-btn');
+const deployedSection= document.getElementById('deployed-section');
+const deployedUrl    = document.getElementById('deployed-url');
+const copyBtn        = document.getElementById('copy-btn');
+const metaInfo       = document.getElementById('meta-info');
+const pagesTbody     = document.getElementById('pages-tbody');
+
+// ─── Generate ─────────────────────────────────────────────────────────────────
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const company   = document.getElementById('company-name').value.trim();
+  const contact   = document.getElementById('contact-name').value.trim();
+  const role      = document.getElementById('contact-role').value.trim();
+  const painPoint = document.getElementById('pain-point').value.trim();
+
+  currentMeta = { company, contact, role, painPoint };
+
+  setStatus('loading', 'Generating personalized content with Claude…');
+  generateBtn.disabled = true;
+
+  // Reset deploy state
+  deployedSection.classList.add('hidden');
+  deployBtn.disabled = false;
+  previewSection.classList.add('hidden');
+
+  try {
+    const res = await fetch('/api/abm/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company, contact, role, painPoint }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Server error ${res.status}`);
+    }
+
+    currentContent = await res.json();
+
+    // Build preview
+    const html = buildLandingPageHTML(currentContent, currentMeta);
+    showPreview(html, currentMeta);
+    renderMetaCard(currentMeta, currentContent);
+
+    clearStatus();
+  } catch (err) {
+    setStatus('error', err.message);
+  } finally {
+    generateBtn.disabled = false;
+  }
+});
+
+// ─── Deploy ───────────────────────────────────────────────────────────────────
+deployBtn.addEventListener('click', async () => {
+  if (!currentContent || !currentMeta) return;
+
+  deployBtn.disabled = true;
+  deployBtn.textContent = 'Deploying…';
+
+  try {
+    const html = buildLandingPageHTML(currentContent, currentMeta);
+
+    const res = await fetch('/api/abm/deploy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        html,
+        meta: currentMeta,
+        content: currentContent,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Deploy failed ${res.status}`);
+    }
+
+    const { url } = await res.json();
+    const fullUrl = window.location.origin + url;
+
+    deployedUrl.value = fullUrl;
+    deployedSection.classList.remove('hidden');
+    previewUrlBar.textContent = fullUrl;
+
+    // Refresh history
+    loadHistory();
+  } catch (err) {
+    alert('Deploy failed: ' + err.message);
+    deployBtn.disabled = false;
+    deployBtn.innerHTML = '🚀 Deploy & Get URL';
+  } finally {
+    deployBtn.textContent = '✓ Deployed — Deploy Again';
+    deployBtn.disabled = false;
+  }
+});
+
+// ─── Copy URL ─────────────────────────────────────────────────────────────────
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(deployedUrl.value).then(() => {
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(() => {
+      copyBtn.textContent = 'Copy';
+      copyBtn.classList.remove('copied');
+    }, 2000);
+  });
+});
+
+// ─── History ──────────────────────────────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const res = await fetch('/api/abm/pages');
+    if (!res.ok) return;
+    const pages = await res.json();
+    renderHistory(pages);
+  } catch (_) {}
+}
+
+function renderHistory(pages) {
+  if (!pages || pages.length === 0) {
+    pagesTbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">No pages generated yet. Create your first above.</div></td></tr>';
+    return;
+  }
+
+  pagesTbody.innerHTML = pages.map(p => `
+    <tr>
+      <td class="td-company">${esc(p.company)}</td>
+      <td>${esc(p.contact)}</td>
+      <td>${esc(p.role)}</td>
+      <td>${formatDate(p.createdAt)}</td>
+      <td class="td-url"><a href="${esc(p.url)}" target="_blank">${esc(window.location.origin + p.url)}</a></td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="copyUrl('${esc(window.location.origin + p.url)}', this)">Copy URL</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function copyUrl(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy URL', 1500);
+  });
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function showPreview(html, meta) {
+  const blob = new Blob([html], { type: 'text/html' });
+  const blobUrl = URL.createObjectURL(blob);
+  previewFrame.src = blobUrl;
+  previewUrlBar.textContent = `preview — ${meta.company}`;
+  previewSection.classList.remove('hidden');
+}
+
+function renderMetaCard(meta, content) {
+  metaInfo.innerHTML = `
+    <div class="meta-row"><span class="label">Company</span><span class="value">${esc(meta.company)}</span></div>
+    <div class="meta-row"><span class="label">Contact</span><span class="value">${esc(meta.contact)}</span></div>
+    <div class="meta-row"><span class="label">Role</span><span class="value">${esc(meta.role)}</span></div>
+    <div class="meta-row"><span class="label">CTA</span><span class="value">${esc(content.cta_button)}</span></div>
+  `;
+}
+
+function setStatus(type, message) {
+  if (type === 'loading') {
+    statusContainer.innerHTML = `<div class="status-bar"><div class="spinner"></div><span>${esc(message)}</span></div>`;
+  } else if (type === 'error') {
+    statusContainer.innerHTML = `<div class="error-bar"><span>⚠</span><span>${esc(message)}</span></div>`;
+  }
+}
+
+function clearStatus() {
+  statusContainer.innerHTML = '';
+}
+
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch (_) { return iso; }
+}
+
+// ─── Landing Page HTML Builder ────────────────────────────────────────────────
+function buildLandingPageHTML(c, meta) {
+  const benefits = (c.benefits || []).map(b => `
+    <div class="benefit-card">
+      <div class="benefit-icon">${esc(b.icon)}</div>
+      <h3>${esc(b.title)}</h3>
+      <p>${esc(b.description)}</p>
+    </div>
+  `).join('');
+
+  const stats = (c.social_proof?.stats || []).map(s => `
+    <div class="stat">
+      <div class="stat-number">${esc(s.number)}</div>
+      <div class="stat-label">${esc(s.label)}</div>
+    </div>
+  `).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${esc(c.hero_headline)} | ${esc(meta.company)}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #fff; color: #0f172a; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Nav */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 64px;
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky; top: 0; background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(12px); z-index: 100;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1.05rem; color: #0f172a;
+    }
+    .nav-logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; color: #fff;
+    }
+    .nav-cta {
+      background: #6366f1; color: #fff; padding: 8px 20px;
+      border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      transition: background 0.2s;
+    }
+    .nav-cta:hover { background: #4f46e5; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      color: #fff; text-align: center; padding: 100px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.3) 0%, transparent 70%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(99,102,241,0.25); border: 1px solid rgba(99,102,241,0.4);
+      padding: 6px 14px; border-radius: 999px; font-size: 0.8rem;
+      font-weight: 500; color: #a5b4fc; margin-bottom: 24px;
+      position: relative;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.25rem); font-weight: 800;
+      line-height: 1.15; letter-spacing: -0.02em; max-width: 760px;
+      margin: 0 auto 20px; position: relative;
+    }
+    .hero h1 .highlight { color: #a5b4fc; }
+    .hero-sub {
+      font-size: 1.1rem; color: #cbd5e1; max-width: 580px;
+      margin: 0 auto 36px; line-height: 1.65; position: relative;
+    }
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #6366f1; color: #fff; padding: 14px 32px;
+      border-radius: 12px; font-size: 1rem; font-weight: 700;
+      transition: all 0.2s; position: relative;
+    }
+    .hero-cta:hover {
+      background: #4f46e5;
+      box-shadow: 0 8px 32px rgba(99,102,241,0.5);
+      transform: translateY(-2px);
+    }
+
+    /* Pain section */
+    .pain {
+      background: #f8fafc; border-top: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0; padding: 80px 24px;
+      text-align: center;
+    }
+    .pain .eyebrow {
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: #6366f1; margin-bottom: 14px;
+    }
+    .pain h2 {
+      font-size: clamp(1.5rem, 3.5vw, 2.25rem); font-weight: 700;
+      max-width: 680px; margin: 0 auto 20px; letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+    .pain p {
+      font-size: 1.05rem; color: #475569; max-width: 600px;
+      margin: 0 auto; line-height: 1.7;
+    }
+
+    /* Benefits */
+    .benefits { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
+    .benefits .section-eyebrow {
+      text-align: center; font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: #6366f1;
+      margin-bottom: 12px;
+    }
+    .benefits .section-title {
+      text-align: center; font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 48px;
+    }
+    .benefits-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .benefit-card {
+      background: #fff; border: 1px solid #e2e8f0;
+      border-radius: 16px; padding: 28px;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .benefit-card:hover {
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+      transform: translateY(-3px);
+    }
+    .benefit-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 16px;
+    }
+    .benefit-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 10px; }
+    .benefit-card p { font-size: 0.9rem; color: #64748b; line-height: 1.65; }
+
+    /* Social proof */
+    .social-proof {
+      background: #0f172a; color: #fff; padding: 80px 24px;
+    }
+    .sp-inner { max-width: 1000px; margin: 0 auto; }
+    .sp-eyebrow {
+      text-align: center; font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: #a5b4fc;
+      margin-bottom: 12px;
+    }
+    .sp-title {
+      text-align: center; font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 48px;
+    }
+    .stats-row {
+      display: flex; justify-content: center; gap: 48px;
+      flex-wrap: wrap; margin-bottom: 56px;
+    }
+    .stat { text-align: center; }
+    .stat-number {
+      font-size: 2.5rem; font-weight: 800; color: #a5b4fc;
+      letter-spacing: -0.02em; line-height: 1;
+    }
+    .stat-label { font-size: 0.85rem; color: #94a3b8; margin-top: 6px; }
+    .testimonial {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 32px; max-width: 640px; margin: 0 auto;
+    }
+    .testimonial blockquote {
+      font-size: 1.05rem; color: #e2e8f0; line-height: 1.7;
+      font-style: italic; margin-bottom: 20px;
+    }
+    .testimonial blockquote::before { content: '"'; color: #6366f1; font-size: 1.4rem; }
+    .testimonial blockquote::after { content: '"'; color: #6366f1; font-size: 1.4rem; }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .author-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: #fff; font-weight: 600; flex-shrink: 0;
+    }
+    .author-name { font-weight: 600; font-size: 0.9rem; }
+    .author-role { font-size: 0.8rem; color: #94a3b8; }
+
+    /* CTA */
+    .cta-section {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      padding: 80px 24px; text-align: center; color: #fff;
+    }
+    .cta-section h2 {
+      font-size: clamp(1.6rem, 4vw, 2.5rem); font-weight: 800;
+      letter-spacing: -0.02em; margin-bottom: 16px;
+    }
+    .cta-section p {
+      font-size: 1.05rem; color: rgba(255,255,255,0.8);
+      max-width: 480px; margin: 0 auto 36px; line-height: 1.65;
+    }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fff; color: #4f46e5; padding: 14px 36px;
+      border-radius: 12px; font-size: 1rem; font-weight: 700;
+      transition: all 0.2s;
+    }
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    /* Footer */
+    footer {
+      background: #0f172a; color: #64748b;
+      text-align: center; padding: 24px;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo">
+      <div class="nav-logo-icon">✦</div>
+      <span>Solutions</span>
+    </div>
+    <a href="#cta" class="nav-cta">${esc(c.cta_button)}</a>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-badge">✦ Exclusively for ${esc(meta.company)}</div>
+    <h1>${esc(c.hero_headline)}</h1>
+    <p class="hero-sub">${esc(c.hero_subheadline)}</p>
+    <a href="#cta" class="hero-cta">${esc(c.cta_button)} →</a>
+  </section>
+
+  <section class="pain">
+    <div class="eyebrow">The Challenge</div>
+    <h2>${esc(c.pain_headline)}</h2>
+    <p>${esc(c.pain_copy)}</p>
+  </section>
+
+  <section class="benefits">
+    <div class="section-eyebrow">Why Teams Choose Us</div>
+    <h2 class="section-title">Everything ${esc(meta.company)} needs to move faster</h2>
+    <div class="benefits-grid">
+      ${benefits}
+    </div>
+  </section>
+
+  <section class="social-proof">
+    <div class="sp-inner">
+      <div class="sp-eyebrow">Proven Results</div>
+      <h2 class="sp-title">Teams like ${esc(meta.company)} see results fast</h2>
+      <div class="stats-row">
+        ${stats}
+      </div>
+      <div class="testimonial">
+        <blockquote>${esc(c.social_proof?.quote || '')}</blockquote>
+        <div class="testimonial-author">
+          <div class="author-avatar">${(c.social_proof?.author_name || 'A').charAt(0)}</div>
+          <div>
+            <div class="author-name">${esc(c.social_proof?.author_name || '')}</div>
+            <div class="author-role">${esc(c.social_proof?.author_role || '')} · ${esc(c.social_proof?.author_company || '')}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section" id="cta">
+    <h2>${esc(c.cta_headline)}</h2>
+    <p>${esc(c.cta_subtext)}</p>
+    <a href="#" class="cta-btn">${esc(c.cta_button)} →</a>
+  </section>
+
+  <footer>
+    <p>This page was created exclusively for ${esc(meta.company)} · ${esc(meta.contact)}, ${esc(meta.role)}</p>
+  </footer>
+
+</body>
+</html>`;
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+loadHistory();
+</script>
+</body>
+</html>
