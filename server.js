@@ -409,6 +409,143 @@ app.get("/lp/:id", (req, res) => {
   res.send(page.html);
 });
 
+// ── Meeting Prep Tool ─────────────────────────────────────────────────────────
+
+const MEETING_PREP_SYSTEM_PROMPT = `You are an elite sales intelligence analyst who prepares comprehensive meeting briefs for B2B sales professionals. You use web search to find current, accurate information.
+
+When given a contact name/LinkedIn URL, their company, the meeting type, and the seller's product/service:
+1. Use web_search to research the contact (LinkedIn, interviews, articles, social media, conference talks)
+2. Use web_search to research the company (recent news, funding, hiring signals, product changes, leadership moves — last 90 days)
+3. Synthesize everything into a precise, actionable meeting brief
+
+Return ONLY a valid JSON object (no markdown fences, no explanation text) with EXACTLY this structure:
+{
+  "contact": {
+    "name": "Full name",
+    "title": "Current job title",
+    "company": "Current company",
+    "background": "2-3 sentences: career background, how long in role, domain expertise",
+    "linkedin_insights": "1-2 sentences: notable posts, thought leadership themes, or public statements relevant to this meeting",
+    "likely_priorities": ["Priority 1", "Priority 2", "Priority 3"],
+    "communication_style": "1 sentence on how they likely prefer to communicate"
+  },
+  "company": {
+    "name": "Company name",
+    "industry": "Industry",
+    "size": "Employee count range",
+    "stage": "E.g. Series B startup, public enterprise, bootstrapped SMB",
+    "description": "1-2 sentence company description",
+    "recent_news": [{"headline": "...", "date": "Month Year", "relevance": "Why this matters for your meeting"}],
+    "growth_signals": ["Signal 1", "Signal 2", "Signal 3"],
+    "tech_stack": ["Tool 1", "Tool 2", "Tool 3"],
+    "challenges": "1-2 sentences on known challenges at their company stage/industry"
+  },
+  "pain_points": [
+    {"pain": "Title", "evidence": "What signals this pain", "our_angle": "How your product maps to this pain"}
+  ],
+  "discovery_questions": [
+    {"question": "Open-ended question", "intent": "What you want to learn", "follow_up": "Natural follow-up question"}
+  ],
+  "talking_points": [
+    {"point": "Key message", "supporting_detail": "Data, story, or example", "when_to_use": "When in the conversation"}
+  ],
+  "objections": [
+    {"objection": "Likely objection", "response": "How to handle it", "pivot": "How to turn it into discovery"}
+  ],
+  "next_steps": [
+    {"step": "Specific action to propose", "timing": "Suggested timeline", "owner": "Who does it"}
+  ],
+  "meeting_agenda": "Suggested 3-5 bullet agenda with time allocations",
+  "executive_summary": "2-3 sentence summary: who you are meeting, why now, what a win looks like"
+}`;
+
+app.get("/meeting-prep", (req, res) => {
+  res.sendFile(join(__dirname, "meeting-prep.html"));
+});
+
+app.post("/api/meeting-prep", async (req, res) => {
+  const { contact, company, meetingType, product } = req.body ?? {};
+
+  if (!contact?.trim() || !company?.trim() || !meetingType || !product?.trim()) {
+    return res.status(400).json({ error: "All fields are required." });
+  }
+
+  const sendEvent = (event, data) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+
+  const statusSteps = [
+    "Researching contact background...",
+    "Scanning LinkedIn and public profiles...",
+    "Analyzing company news and signals...",
+    "Identifying growth indicators...",
+    "Mapping pain points to your solution...",
+    "Crafting discovery questions...",
+    "Preparing objection handlers...",
+    "Finalizing your meeting brief...",
+  ];
+
+  let stepIndex = 0;
+
+  const messages = [
+    {
+      role: "user",
+      content: `Prepare a meeting brief for the following:\n\nContact: ${contact.trim()}\nCompany: ${company.trim()}\nMeeting Type: ${meetingType}\nMy Product/Service: ${product.trim()}\n\nUse web search to research the contact and company thoroughly. Focus on news from the last 90 days. Return the complete JSON brief as specified.`,
+    },
+  ];
+
+  try {
+    sendEvent("status", { message: "Initializing meeting prep agent..." });
+
+    let iterations = 0;
+    const maxIterations = 12;
+
+    while (iterations < maxIterations) {
+      if (stepIndex < statusSteps.length) {
+        sendEvent("status", { message: statusSteps[stepIndex++] });
+      }
+
+      const response = await client.messages.create({
+        model: "claude-opus-4-6",
+        max_tokens: 8000,
+        system: MEETING_PREP_SYSTEM_PROMPT,
+        tools: [{ type: "web_search_20260209", name: "web_search" }],
+        messages,
+      });
+
+      iterations++;
+
+      if (response.stop_reason === "end_turn") {
+        const textBlock = response.content.find((b) => b.type === "text");
+        if (!textBlock) { sendEvent("error", { message: "No content returned." }); break; }
+        const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) { sendEvent("error", { message: "Could not parse response." }); break; }
+        sendEvent("result", JSON.parse(jsonMatch[0]));
+        break;
+      }
+
+      messages.push({ role: "assistant", content: response.content });
+    }
+  } catch (err) {
+    if (err instanceof Anthropic.AuthenticationError) {
+      sendEvent("error", { message: "Invalid API key. Check ANTHROPIC_API_KEY." });
+    } else if (err instanceof Anthropic.RateLimitError) {
+      sendEvent("error", { message: "Rate limited. Please try again in a moment." });
+    } else {
+      console.error("Meeting prep error:", err.message);
+      sendEvent("error", { message: "Research failed. Please try again." });
+    }
+  }
+
+  sendEvent("done", {});
+  res.end();
+});
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 3000;

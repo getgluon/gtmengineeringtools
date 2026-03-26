@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Prep Tool – GTM Engineering Tools</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #161920;
+      --surface2: #1e2130;
+      --surface3: #252a3a;
+      --border: #2a2f42;
+      --border2: #353b52;
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --accent3: #ec4899;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --text: #e4e7f0;
+      --text2: #9ba3bc;
+      --text3: #6b7491;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 48px 20px 100px;
+    }
+
+    .page-wrap { max-width: 960px; margin: 0 auto; }
+
+    /* ── Header ───────────────────────────────────────────── */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text3); text-decoration: none; font-size: 0.85rem;
+      margin-bottom: 32px; transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--text2); }
+
+    .page-header { margin-bottom: 36px; }
+    .header-row { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+    .header-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--blue), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; flex-shrink: 0;
+    }
+    .page-header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.4px; }
+    .page-header p { color: var(--text3); font-size: 0.9rem; margin-top: 6px; }
+
+    /* ── Form ─────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .card-label {
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text3); margin-bottom: 20px;
+    }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.82rem; font-weight: 500; color: var(--text2); }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px;
+      color: var(--text); font-size: 0.92rem; font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+    }
+    .form-group select { cursor: pointer; }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: var(--text3); }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
+    }
+    .form-group select option { background: var(--surface2); }
+
+    .form-actions { margin-top: 20px; display: flex; align-items: center; gap: 12px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 7px; padding: 10px 20px; border-radius: 10px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      border: none; transition: all 0.2s; font-family: inherit; white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue), var(--accent));
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+      filter: brightness(1.1);
+      box-shadow: 0 4px 16px rgba(59,130,246,0.4);
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+    .btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Status / Loading ─────────────────────────────────── */
+    .status-wrap {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 18px; border-radius: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      font-size: 0.875rem; color: var(--text2);
+    }
+    .spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid var(--border2); border-top-color: var(--blue);
+      animation: spin 0.7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-wrap {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 18px; border-radius: 10px;
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+      font-size: 0.875rem; color: #f87171;
+    }
+
+    /* ── Brief Output ─────────────────────────────────────── */
+    .brief-actions {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .brief-meta {
+      margin-left: auto; font-size: 0.8rem; color: var(--text3);
+    }
+
+    /* Section cards */
+    .section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px 26px; margin-bottom: 16px;
+    }
+    .section-head {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    }
+    .section-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.95rem; flex-shrink: 0;
+    }
+    .section-title { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+    .section-sub { font-size: 0.78rem; color: var(--text3); margin-top: 1px; }
+
+    /* Executive summary banner */
+    .exec-summary {
+      background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(99,102,241,0.12));
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 16px; padding: 22px 26px; margin-bottom: 16px;
+    }
+    .exec-summary-label {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: #93c5fd; margin-bottom: 8px;
+    }
+    .exec-summary p { font-size: 0.97rem; color: var(--text); line-height: 1.7; }
+
+    /* Two-col layout for top sections */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 700px) {
+      .two-col { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Data rows */
+    .data-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 12px; padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.84rem;
+    }
+    .data-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .data-label { color: var(--text3); flex-shrink: 0; min-width: 110px; }
+    .data-value { color: var(--text2); text-align: right; }
+
+    /* Pills list */
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .pill {
+      padding: 4px 10px; border-radius: 999px; font-size: 0.75rem;
+      font-weight: 500; background: var(--surface3); color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .pill-blue { background: rgba(59,130,246,0.12); color: #93c5fd; border-color: rgba(59,130,246,0.25); }
+    .pill-purple { background: rgba(99,102,241,0.12); color: #a5b4fc; border-color: rgba(99,102,241,0.25); }
+    .pill-green { background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.25); }
+
+    /* Item cards (pain, questions, objections, etc) */
+    .item-list { display: flex; flex-direction: column; gap: 12px; }
+    .item-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .item-card-title {
+      font-size: 0.88rem; font-weight: 600; color: var(--text);
+      margin-bottom: 6px;
+    }
+    .item-card-body { font-size: 0.83rem; color: var(--text2); line-height: 1.6; }
+    .item-card-body + .item-card-body { margin-top: 6px; }
+    .item-tag {
+      display: inline-block; font-size: 0.7rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text3); margin-bottom: 3px;
+    }
+    .item-tag.blue { color: #93c5fd; }
+    .item-tag.green { color: #6ee7b7; }
+    .item-tag.yellow { color: #fcd34d; }
+    .item-tag.pink { color: #f9a8d4; }
+
+    /* News items */
+    .news-item {
+      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.84rem;
+    }
+    .news-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .news-headline { color: var(--text); font-weight: 500; margin-bottom: 3px; }
+    .news-date { color: var(--text3); font-size: 0.75rem; margin-bottom: 4px; }
+    .news-relevance { color: var(--text2); line-height: 1.5; }
+
+    /* Agenda block */
+    .agenda-block {
+      background: var(--surface2); border-radius: 10px;
+      padding: 14px 16px; font-size: 0.87rem;
+      color: var(--text2); line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    /* Next steps */
+    .next-step {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 0.84rem;
+    }
+    .next-step:last-child { border-bottom: none; padding-bottom: 0; }
+    .step-num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent); color: #fff; font-size: 0.72rem;
+      font-weight: 700; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .step-text { color: var(--text); font-weight: 500; }
+    .step-meta { color: var(--text3); font-size: 0.78rem; margin-top: 2px; }
+
+    .hidden { display: none !important; }
+
+    /* ── Print Styles ─────────────────────────────────────── */
+    @media print {
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      body {
+        background: #fff !important;
+        color: #0f172a !important;
+        padding: 0 !important;
+        font-size: 11pt;
+      }
+
+      .back-link, .page-header, #form-card,
+      #status-area, .brief-actions { display: none !important; }
+
+      .page-wrap { max-width: 100%; }
+
+      #brief-output { display: block !important; }
+
+      .exec-summary {
+        background: #f0f4ff !important;
+        border-color: #c7d2fe !important;
+        border-radius: 8px !important;
+        margin-bottom: 12pt !important;
+        padding: 14pt !important;
+      }
+      .exec-summary-label { color: #4338ca !important; }
+      .exec-summary p { color: #0f172a !important; }
+
+      .two-col { gap: 10pt !important; margin-bottom: 10pt !important; }
+      .section {
+        background: #fff !important; border-color: #e2e8f0 !important;
+        border-radius: 8px !important; padding: 14pt !important;
+        margin-bottom: 10pt !important; break-inside: avoid;
+      }
+      .section-title { color: #0f172a !important; }
+      .section-sub { color: #64748b !important; }
+
+      .data-label { color: #64748b !important; }
+      .data-value { color: #1e293b !important; }
+      .data-row { border-color: #e2e8f0 !important; }
+
+      .item-card {
+        background: #f8fafc !important; border-color: #e2e8f0 !important;
+        break-inside: avoid;
+      }
+      .item-card-title { color: #0f172a !important; }
+      .item-card-body { color: #334155 !important; }
+      .item-tag { color: #64748b !important; }
+      .item-tag.blue { color: #2563eb !important; }
+      .item-tag.green { color: #059669 !important; }
+      .item-tag.yellow { color: #d97706 !important; }
+      .item-tag.pink { color: #db2777 !important; }
+
+      .news-headline { color: #0f172a !important; }
+      .news-date { color: #94a3b8 !important; }
+      .news-relevance { color: #334155 !important; }
+      .news-item { border-color: #e2e8f0 !important; }
+
+      .agenda-block {
+        background: #f8fafc !important; color: #334155 !important;
+      }
+
+      .pill {
+        background: #f1f5f9 !important; color: #475569 !important;
+        border-color: #cbd5e1 !important;
+      }
+      .pill-blue { background: #eff6ff !important; color: #2563eb !important; border-color: #bfdbfe !important; }
+      .pill-green { background: #f0fdf4 !important; color: #059669 !important; border-color: #bbf7d0 !important; }
+
+      .step-num { background: #4f46e5 !important; }
+      .step-text { color: #0f172a !important; }
+      .step-meta { color: #64748b !important; }
+      .next-step { border-color: #e2e8f0 !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <a href="/" class="back-link">← GTM Engineering Tools</a>
+
+  <div class="page-header">
+    <div class="header-row">
+      <div class="header-icon">📋</div>
+      <h1>Meeting Prep Tool</h1>
+    </div>
+    <p>AI-powered meeting briefs with live research — contact background, company signals, discovery questions, objection handlers, and next steps.</p>
+  </div>
+
+  <!-- ── Input Form ──────────────────────────────────────── -->
+  <div class="card" id="form-card">
+    <div class="card-label">Meeting Details</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="contact">Contact Name or LinkedIn URL</label>
+        <input id="contact" type="text" placeholder="e.g. Sarah Chen or linkedin.com/in/sarah-chen" />
+      </div>
+      <div class="form-group">
+        <label for="company">Their Company</label>
+        <input id="company" type="text" placeholder="e.g. Acme Corp" />
+      </div>
+      <div class="form-group">
+        <label for="meeting-type">Meeting Type</label>
+        <select id="meeting-type">
+          <option value="discovery">Discovery Call</option>
+          <option value="demo">Product Demo</option>
+          <option value="follow-up">Follow-Up</option>
+          <option value="negotiation">Negotiation</option>
+          <option value="qbr">QBR / Business Review</option>
+          <option value="champion">Champion Building</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="product">Your Product / Service</label>
+        <input id="product" type="text" placeholder="e.g. AI-powered sales engagement platform" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="generate-btn" onclick="generate()">
+        <span>🔍</span> Generate Brief
+      </button>
+      <div id="status-area"></div>
+    </div>
+  </div>
+
+  <!-- ── Brief Output ────────────────────────────────────── -->
+  <div id="brief-output" class="hidden">
+
+    <!-- Action bar -->
+    <div class="brief-actions">
+      <button class="btn btn-ghost" onclick="generate()">↺ Regenerate</button>
+      <button class="btn btn-ghost" id="copy-btn" onclick="copyBrief()">⎘ Copy Text</button>
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Print / Save PDF</button>
+      <span class="brief-meta" id="brief-meta"></span>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="exec-summary" id="exec-summary">
+      <div class="exec-summary-label">Executive Summary</div>
+      <p id="exec-summary-text"></p>
+    </div>
+
+    <!-- Contact + Company (2-col) -->
+    <div class="two-col">
+
+      <!-- Contact card -->
+      <div class="section" id="contact-section">
+        <div class="section-head">
+          <div class="section-icon" style="background:rgba(59,130,246,0.15)">👤</div>
+          <div>
+            <div class="section-title" id="contact-name-title">Contact</div>
+            <div class="section-sub" id="contact-title-sub"></div>
+          </div>
+        </div>
+        <div id="contact-data-rows"></div>
+        <div style="margin-top:12px">
+          <div class="item-tag">Likely Priorities</div>
+          <div class="pills" id="contact-priorities"></div>
+        </div>
+      </div>
+
+      <!-- Company card -->
+      <div class="section" id="company-section">
+        <div class="section-head">
+          <div class="section-icon" style="background:rgba(99,102,241,0.15)">🏢</div>
+          <div>
+            <div class="section-title" id="company-name-title">Company</div>
+            <div class="section-sub" id="company-stage-sub"></div>
+          </div>
+        </div>
+        <div id="company-data-rows"></div>
+        <div style="margin-top:12px">
+          <div class="item-tag">Tech Stack</div>
+          <div class="pills" id="company-tech"></div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="item-tag green">Growth Signals</div>
+          <div class="pills" id="company-signals"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent News -->
+    <div class="section" id="news-section">
+      <div class="section-head">
+        <div class="section-icon" style="background:rgba(245,158,11,0.15)">📰</div>
+        <div>
+          <div class="section-title">Recent News</div>
+          <div class="section-sub">Last 90 days — what to reference in the meeting</div>
+        </div>
+      </div>
+      <div id="news-list"></div>
+    </div>
+
+    <!-- Pain Points -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-icon" style="background:rgba(236,72,153,0.15)">🎯</div>
+        <div>
+          <div class="section-title">Likely Pain Points</div>
+          <div class="section-sub">Based on their role, company stage, and signals</div>
+        </div>
+      </div>
+      <div class="item-list" id="pain-list"></div>
+    </div>
+
+    <!-- Discovery Questions -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-icon" style="background:rgba(16,185,129,0.15)">❓</div>
+        <div>
+          <div class="section-title">Tailored Discovery Questions</div>
+          <div class="section-sub">Ask these — then listen</div>
+        </div>
+      </div>
+      <div class="item-list" id="questions-list"></div>
+    </div>
+
+    <!-- Talking Points + Objections (2-col) -->
+    <div class="two-col">
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-icon" style="background:rgba(99,102,241,0.15)">💬</div>
+          <div>
+            <div class="section-title">Talking Points</div>
+            <div class="section-sub">Key messages to land</div>
+          </div>
+        </div>
+        <div class="item-list" id="talking-list"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-icon" style="background:rgba(239,68,68,0.15)">🛡</div>
+          <div>
+            <div class="section-title">Objection Handlers</div>
+            <div class="section-sub">Anticipate and disarm</div>
+          </div>
+        </div>
+        <div class="item-list" id="objections-list"></div>
+      </div>
+    </div>
+
+    <!-- Agenda + Next Steps (2-col) -->
+    <div class="two-col">
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-icon" style="background:rgba(245,158,11,0.15)">🗓</div>
+          <div>
+            <div class="section-title">Suggested Agenda</div>
+            <div class="section-sub">Recommended flow for the meeting</div>
+          </div>
+        </div>
+        <div class="agenda-block" id="agenda-block"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-icon" style="background:rgba(16,185,129,0.15)">✅</div>
+          <div>
+            <div class="section-title">Recommended Next Steps</div>
+            <div class="section-sub">Propose these before the call ends</div>
+          </div>
+        </div>
+        <div id="next-steps-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /brief-output -->
+</div><!-- /page-wrap -->
+
+<script>
+let lastBriefText = '';
+
+// ── Generate ───────────────────────────────────────────────────────────────
+async function generate() {
+  const contact = document.getElementById('contact').value.trim();
+  const company = document.getElementById('company').value.trim();
+  const meetingType = document.getElementById('meeting-type').value;
+  const product = document.getElementById('product').value.trim();
+
+  if (!contact || !company || !product) {
+    showStatus('error', 'Please fill in all fields before generating.');
+    return;
+  }
+
+  const btn = document.getElementById('generate-btn');
+  btn.disabled = true;
+  document.getElementById('brief-output').classList.add('hidden');
+  showStatus('loading', 'Initializing meeting prep agent...');
+
+  try {
+    const res = await fetch('/api/meeting-prep', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contact, company, meetingType, product }),
+    });
+
+    if (!res.ok || !res.body) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Server error ${res.status}`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+
+      for (const part of parts) {
+        const lines = part.split('\n');
+        let event = '', data = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) event = line.slice(7).trim();
+          if (line.startsWith('data: ')) data = line.slice(6).trim();
+        }
+        if (!event || !data) continue;
+
+        if (event === 'status') {
+          const { message } = JSON.parse(data);
+          showStatus('loading', message);
+        } else if (event === 'result') {
+          const brief = JSON.parse(data);
+          renderBrief(brief, contact, company, meetingType);
+          clearStatus();
+        } else if (event === 'error') {
+          const { message } = JSON.parse(data);
+          showStatus('error', message);
+        }
+      }
+    }
+  } catch (err) {
+    showStatus('error', err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function renderBrief(d, contactInput, companyInput, meetingType) {
+  const c = d.contact ?? {};
+  const co = d.company ?? {};
+  const mtLabel = { discovery:'Discovery Call', demo:'Product Demo', 'follow-up':'Follow-Up',
+                    negotiation:'Negotiation', qbr:'QBR / Business Review', champion:'Champion Building' };
+
+  // Meta bar
+  document.getElementById('brief-meta').textContent =
+    `${c.name || contactInput} · ${co.name || companyInput} · ${mtLabel[meetingType] || meetingType} · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+
+  // Executive summary
+  setText('exec-summary-text', d.executive_summary || '');
+
+  // Contact
+  setText('contact-name-title', c.name || contactInput);
+  setText('contact-title-sub', c.title || '');
+  document.getElementById('contact-data-rows').innerHTML = rows([
+    ['Background', c.background],
+    ['LinkedIn Signals', c.linkedin_insights],
+    ['Comm. Style', c.communication_style],
+  ]);
+  document.getElementById('contact-priorities').innerHTML =
+    (c.likely_priorities || []).map(p => `<span class="pill pill-blue">${esc(p)}</span>`).join('');
+
+  // Company
+  setText('company-name-title', co.name || companyInput);
+  setText('company-stage-sub', co.stage || '');
+  document.getElementById('company-data-rows').innerHTML = rows([
+    ['Industry', co.industry],
+    ['Size', co.size],
+    ['Description', co.description],
+    ['Challenges', co.challenges],
+  ]);
+  document.getElementById('company-tech').innerHTML =
+    (co.tech_stack || []).map(t => `<span class="pill pill-purple">${esc(t)}</span>`).join('');
+  document.getElementById('company-signals').innerHTML =
+    (co.growth_signals || []).map(s => `<span class="pill pill-green">${esc(s)}</span>`).join('');
+
+  // News
+  document.getElementById('news-list').innerHTML = (co.recent_news || []).map(n => `
+    <div class="news-item">
+      <div class="news-headline">${esc(n.headline)}</div>
+      <div class="news-date">${esc(n.date)}</div>
+      <div class="news-relevance">${esc(n.relevance)}</div>
+    </div>`).join('') || '<p style="color:var(--text3);font-size:.85rem">No recent news found.</p>';
+
+  // Pain points
+  document.getElementById('pain-list').innerHTML = (d.pain_points || []).map(p => `
+    <div class="item-card">
+      <div class="item-card-title">${esc(p.pain)}</div>
+      <div class="item-tag blue">Evidence</div>
+      <div class="item-card-body">${esc(p.evidence)}</div>
+      <div class="item-tag green" style="margin-top:8px">Your Angle</div>
+      <div class="item-card-body">${esc(p.our_angle)}</div>
+    </div>`).join('');
+
+  // Discovery questions
+  document.getElementById('questions-list').innerHTML = (d.discovery_questions || []).map((q, i) => `
+    <div class="item-card">
+      <div class="item-card-title">Q${i+1}: ${esc(q.question)}</div>
+      <div class="item-tag blue">Intent</div>
+      <div class="item-card-body">${esc(q.intent)}</div>
+      <div class="item-tag yellow" style="margin-top:8px">Follow-Up</div>
+      <div class="item-card-body">${esc(q.follow_up)}</div>
+    </div>`).join('');
+
+  // Talking points
+  document.getElementById('talking-list').innerHTML = (d.talking_points || []).map(t => `
+    <div class="item-card">
+      <div class="item-card-title">${esc(t.point)}</div>
+      <div class="item-tag blue">Detail</div>
+      <div class="item-card-body">${esc(t.supporting_detail)}</div>
+      <div class="item-tag green" style="margin-top:8px">When to Use</div>
+      <div class="item-card-body">${esc(t.when_to_use)}</div>
+    </div>`).join('');
+
+  // Objections
+  document.getElementById('objections-list').innerHTML = (d.objections || []).map(o => `
+    <div class="item-card">
+      <div class="item-card-title">"${esc(o.objection)}"</div>
+      <div class="item-tag pink">Response</div>
+      <div class="item-card-body">${esc(o.response)}</div>
+      <div class="item-tag green" style="margin-top:8px">Pivot</div>
+      <div class="item-card-body">${esc(o.pivot)}</div>
+    </div>`).join('');
+
+  // Agenda
+  document.getElementById('agenda-block').textContent = d.meeting_agenda || '';
+
+  // Next steps
+  document.getElementById('next-steps-list').innerHTML = (d.next_steps || []).map((s, i) => `
+    <div class="next-step">
+      <div class="step-num">${i+1}</div>
+      <div>
+        <div class="step-text">${esc(s.step)}</div>
+        <div class="step-meta">${esc(s.timing)} · ${esc(s.owner)}</div>
+      </div>
+    </div>`).join('');
+
+  // Build plain-text version for copy
+  lastBriefText = buildPlainText(d, contactInput, companyInput, mtLabel[meetingType] || meetingType);
+
+  document.getElementById('brief-output').classList.remove('hidden');
+  document.getElementById('brief-output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Plain text for copy ────────────────────────────────────────────────────
+function buildPlainText(d, contact, company, meetingType) {
+  const c = d.contact ?? {};
+  const co = d.company ?? {};
+  const lines = [];
+  const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  lines.push(`MEETING PREP BRIEF`);
+  lines.push(`${c.name || contact} · ${co.name || company} · ${meetingType} · ${date}`);
+  lines.push(`${'─'.repeat(60)}`);
+
+  if (d.executive_summary) {
+    lines.push(`\nEXECUTIVE SUMMARY\n${d.executive_summary}`);
+  }
+
+  lines.push(`\nCONTACT\nName: ${c.name || ''}\nTitle: ${c.title || ''}\nBackground: ${c.background || ''}\nLinkedIn: ${c.linkedin_insights || ''}\nPriorities: ${(c.likely_priorities || []).join(', ')}`);
+
+  lines.push(`\nCOMPANY\nName: ${co.name || ''}\nStage: ${co.stage || ''}\nIndustry: ${co.industry || ''}\nSize: ${co.size || ''}\nDescription: ${co.description || ''}\nTech Stack: ${(co.tech_stack || []).join(', ')}\nGrowth Signals: ${(co.growth_signals || []).join(', ')}`);
+
+  if ((co.recent_news || []).length) {
+    lines.push(`\nRECENT NEWS`);
+    (co.recent_news || []).forEach(n => lines.push(`• ${n.date} — ${n.headline}\n  Relevance: ${n.relevance}`));
+  }
+
+  if ((d.pain_points || []).length) {
+    lines.push(`\nPAIN POINTS`);
+    (d.pain_points || []).forEach(p => lines.push(`• ${p.pain}\n  Evidence: ${p.evidence}\n  Angle: ${p.our_angle}`));
+  }
+
+  if ((d.discovery_questions || []).length) {
+    lines.push(`\nDISCOVERY QUESTIONS`);
+    (d.discovery_questions || []).forEach((q, i) => lines.push(`Q${i+1}: ${q.question}\n  Intent: ${q.intent}\n  Follow-up: ${q.follow_up}`));
+  }
+
+  if ((d.talking_points || []).length) {
+    lines.push(`\nTALKING POINTS`);
+    (d.talking_points || []).forEach(t => lines.push(`• ${t.point}\n  Detail: ${t.supporting_detail}\n  When: ${t.when_to_use}`));
+  }
+
+  if ((d.objections || []).length) {
+    lines.push(`\nOBJECTION HANDLERS`);
+    (d.objections || []).forEach(o => lines.push(`"${o.objection}"\n  Response: ${o.response}\n  Pivot: ${o.pivot}`));
+  }
+
+  if (d.meeting_agenda) lines.push(`\nAGENDA\n${d.meeting_agenda}`);
+
+  if ((d.next_steps || []).length) {
+    lines.push(`\nNEXT STEPS`);
+    (d.next_steps || []).forEach((s, i) => lines.push(`${i+1}. ${s.step} (${s.timing} · ${s.owner})`));
+  }
+
+  return lines.join('\n');
+}
+
+// ── Copy ───────────────────────────────────────────────────────────────────
+function copyBrief() {
+  if (!lastBriefText) return;
+  navigator.clipboard.writeText(lastBriefText).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.innerHTML = '⎘ Copy Text'; }, 2000);
+  });
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function showStatus(type, msg) {
+  const el = document.getElementById('status-area');
+  if (type === 'loading') {
+    el.innerHTML = `<div class="status-wrap"><div class="spinner"></div><span>${esc(msg)}</span></div>`;
+  } else if (type === 'error') {
+    el.innerHTML = `<div class="error-wrap"><span>⚠</span><span>${esc(msg)}</span></div>`;
+  }
+}
+function clearStatus() { document.getElementById('status-area').innerHTML = ''; }
+
+function setText(id, val) {
+  document.getElementById(id).textContent = val || '';
+}
+
+function rows(pairs) {
+  return pairs.filter(([, v]) => v).map(([label, val]) => `
+    <div class="data-row">
+      <span class="data-label">${esc(label)}</span>
+      <span class="data-value">${esc(val)}</span>
+    </div>`).join('');
+}
+
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
