@@ -3,17 +3,11 @@
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "api/company.js", "use": "@vercel/node" },
-    { "src": "api/card.js", "use": "@vercel/node" }
+    { "src": "api/card.js", "use": "@vercel/node", "config": { "maxDuration": 60, "memory": 1024 } }
   ],
   "routes": [
     { "src": "/api/company", "dest": "/api/company.js" },
     { "src": "/api/card", "dest": "/api/card.js" },
     { "src": "/", "dest": "/index.html" }
-  ],
-  "functions": {
-    "api/card.js": {
-      "maxDuration": 60,
-      "memory": 1024
-    }
-  }
+  ]
 }
